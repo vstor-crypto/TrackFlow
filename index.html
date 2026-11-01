@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Track Flow: loja virtual com produtos selecionados, ofertas e pedidos online.">
+	<meta name="theme-color" content="#74132f">
+	<title>Track Flow</title>
+	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E">
+	<link rel="stylesheet" href="style.css?v=9">
+</head>
+<body>
+	<a class="pular" href="#inicio">Pular para o conteúdo</a>
+	<header>
+		<a class="marca" href="#inicio"><strong>TRACK FLOW</strong></a>
+		<nav aria-label="Navegação principal">
+			<ul>
+				<li><a href="#inicio">Início</a></li>
+				<li><a href="#produtos">Produtos</a></li>
+				<li><a href="#ofertas">Ofertas</a></li>
+				<li><a href="#conta">Conta</a></li>
+				<li><a href="#pedidos">Pedidos</a></li>
+				<li id="nav-admin" hidden><a href="#admin">Admin</a></li>
+				<li><a href="#contato">Contato</a></li>
+			</ul>
+		</nav>
+		<form action="#produtos" method="get" role="search">
+			<label for="busca">Buscar produtos</label>
+			<input type="search" id="busca" name="q" placeholder="O que você procura?">
+			<button type="submit">Buscar</button>
+		</form>
+		<a href="#carrinho" class="carrinho" aria-label="Ir para o carrinho">
+			<span class="icone-carrinho" aria-hidden="true">🛒</span>
+			Carrinho
+			<span class="contador" aria-hidden="true">0</span>
+		</a>
+	</header>
+
+	<main id="inicio">
+		<p id="aviso-servidor" role="alert" hidden>
+			<span id="texto-aviso"></span>
+			<button type="button" id="tentar-novamente">Tentar novamente</button>
+		</p>
+
+		<noscript><p id="aviso-js">Ative o JavaScript para usar a loja.</p></noscript>
+
+		<section class="banner" aria-labelledby="titulo-principal">
+			<div class="banner-texto">
+				<h1 id="titulo-principal">Tudo o que você precisa, em um só lugar</h1>
+				<p>Descubra produtos selecionados e aproveite nossas ofertas.</p>
+				<a href="#produtos">Ver produtos</a>
+			</div>
+			<div class="banner-imagens">
+				<img src="Imagens/conjunto.png" alt="Mochila preta, fone Bluetooth branco e garrafa térmica preta do Track Flow">
+			</div>
+		</section>
+
+		<section id="ofertas" aria-labelledby="titulo-ofertas">
+			<h2 id="titulo-ofertas">Ofertas especiais</h2>
+			<p id="status-ofertas" role="status">Carregando ofertas...</p>
+			<ul id="lista-ofertas"></ul>
+		</section>
+
+		<section id="produtos" aria-labelledby="titulo-produtos">
+			<h2 id="titulo-produtos">Produtos em destaque</h2>
+			<div id="filtros-categoria" class="filtros" role="group" aria-label="Filtrar por categoria"></div>
+			<p id="status-produtos" role="status">Carregando produtos...</p>
+			<ul id="lista-produtos"></ul>
+		</section>
+
+		<section id="beneficios" aria-labelledby="titulo-beneficios">
+			<h2 id="titulo-beneficios">Compre com tranquilidade</h2>
+			<ul>
+				<li>Pagamento seguro</li>
+				<li>Entrega para todo o Brasil</li>
+				<li>Atendimento dedicado</li>
+			</ul>
+		</section>
+
+		<section id="conta" aria-labelledby="titulo-conta">
+			<h2 id="titulo-conta">Acesse sua conta</h2>
+			<p id="status-conta" role="status">Entre ou crie uma conta para finalizar sua compra.</p>
+			<div class="forms-conta">
+				<form id="form-login">
+					<h3>Entrar</h3>
+					<label for="login-usuario">Usuário</label>
+					<input id="login-usuario" name="usuario" autocomplete="username" required minlength="3" maxlength="50">
+					<label for="login-senha">Senha</label>
+					<input id="login-senha" name="senha" type="password" autocomplete="current-password" required maxlength="128">
+					<button type="submit">Entrar</button>
+				</form>
+				<form id="form-registro">
+					<h3>Criar conta de cliente</h3>
+					<label for="registro-usuario">Usuário</label>
+					<input id="registro-usuario" name="usuario" autocomplete="username" required minlength="3" maxlength="50">
+					<label for="registro-senha">Senha (mínimo 8 caracteres)</label>
+					<input id="registro-senha" name="senha" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
+					<button type="submit">Criar conta</button>
+				</form>
+			</div>
+			<button id="sair-conta" type="button" hidden>Sair da conta</button>
+		</section>
+
+		<section id="carrinho" aria-labelledby="titulo-carrinho">
+			<h2 id="titulo-carrinho">Carrinho</h2>
+			<ul id="itens-carrinho" aria-label="Itens do carrinho"></ul>
+			<p id="status-carrinho" role="status">Seu carrinho está vazio.</p>
+			<button id="finalizar-pedido" type="button" disabled>Finalizar pedido</button>
+		</section>
+
+		<section id="pedidos" aria-labelledby="titulo-pedidos">
+			<h2 id="titulo-pedidos">Meus pedidos</h2>
+			<p id="status-pedidos" role="status">Entre na sua conta para ver seus pedidos.</p>
+			<ul id="lista-pedidos"></ul>
+		</section>
+
+		<section id="admin" aria-labelledby="titulo-admin" hidden>
+			<h2 id="titulo-admin">Painel do administrador</h2>
+			<p id="status-admin" role="status"></p>
+			<div class="forms-conta">
+				<form id="form-produto">
+					<h3>Cadastrar produto</h3>
+					<label for="produto-categoria">Categoria</label>
+					<select id="produto-categoria" name="categoria_id" required></select>
+					<label for="produto-nome">Nome</label>
+					<input id="produto-nome" name="nome" required maxlength="100">
+					<label for="produto-descricao">Descrição (opcional)</label>
+					<input id="produto-descricao" name="descricao" maxlength="300">
+					<label for="produto-imagem">Imagem (opcional, ex.: Imagens/produto.png)</label>
+					<input id="produto-imagem" name="imagem" placeholder="Imagens/produto.png">
+					<label for="produto-preco">Preço (ex.: 129,90)</label>
+					<input id="produto-preco" name="preco" inputmode="decimal" required>
+					<label for="produto-preco-antigo">Preço antigo, se estiver em oferta (opcional)</label>
+					<input id="produto-preco-antigo" name="preco_antigo" inputmode="decimal">
+					<label for="produto-estoque">Estoque</label>
+					<input id="produto-estoque" name="estoque" type="number" min="0" max="1000000" step="1" required>
+					<button type="submit">Cadastrar produto</button>
+				</form>
+				<form id="form-categoria">
+					<h3>Nova categoria</h3>
+					<label for="categoria-nome">Nome da categoria</label>
+					<input id="categoria-nome" name="nome" required maxlength="50">
+					<button type="submit">Criar categoria</button>
+				</form>
+				<div class="painel-estoque">
+					<h3>Estoque</h3>
+					<ul id="lista-estoque"></ul>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer id="contato">
+		<h2>TRACK FLOW</h2>
+		<p>Uma experiência simples para encontrar o que você procura.</p>
+		<address>
+			Dúvidas? Entre em contato pelo e-mail
+			<a href="mailto:TrackFlow0000@gmail.com">TrackFlow0000@gmail.com</a>.
+		</address>
+		<p><small>&copy; 2026 TRACK FLOW. Todos os direitos reservados.</small></p>
+	</footer>
+
+	<template id="modelo-produto">
+		<li>
+			<article>
+				<img alt="" width="300" height="300">
+				<p class="categoria"></p>
+				<h3></h3>
+				<p class="descricao"></p>
+				<p class="preco"><del></del> <strong></strong></p>
+				<button type="button">Adicionar ao carrinho</button>
+			</article>
+		</li>
+	</template>
+
+	<script src="script.js"></script>
+</body>
+</html>
