@@ -749,6 +749,7 @@ def limpar_falhas_login(chave):
 ROTAS_GET = {
     "/api/produtos": "get_produtos",
     "/api/categorias": "get_categorias",
+    "/api/saude": "get_saude",
     "/api/me": "get_me",
     "/api/pedidos": "get_pedidos",
 }
@@ -762,6 +763,69 @@ ROTAS_POST = {
     "/api/produtos/estoque": "post_estoque",
     "/api/categorias": "post_categoria",
 }
+
+
+def normalizar_nome_arquivo(nome):
+    return nome.lower().replace(" ", "_").replace("-", "_")
+
+
+def pasta_de_imagens():
+    for nome in os.listdir(DIRETORIO_BASE):
+        caminho = os.path.join(DIRETORIO_BASE, nome)
+        if nome.lower() == PASTA_IMAGENS.strip("/").lower() and os.path.isdir(caminho):
+            return caminho
+    return None
+
+
+def radical_do_arquivo(nome):
+    base = os.path.splitext(normalizar_nome_arquivo(nome))[0]
+    return re.sub(r"_\d+$", "", base)
+
+
+def localizar_imagem(nome):
+    """Acha o arquivo ignorando maiúsculas, espaço/_/-, a extensão e um sufixo _1, _2..."""
+    if not nome or "/" in nome or "\\" in nome:
+        return None
+    pasta = pasta_de_imagens()
+    if pasta is None:
+        return None
+    arquivos = [f for f in sorted(os.listdir(pasta)) if os.path.isfile(os.path.join(pasta, f))]
+    niveis = (
+        lambda f: normalizar_nome_arquivo(f),
+        lambda f: os.path.splitext(normalizar_nome_arquivo(f))[0],
+        radical_do_arquivo,
+    )
+    for chave_de in niveis:
+        chave = chave_de(nome)
+        for existente in arquivos:
+            if chave_de(existente) == chave:
+                return os.path.join(pasta, existente)
+    return None
+
+
+def imagens_faltando(conexao):
+    faltando = []
+    for linha in conexao.execute("SELECT nome, imagem FROM produtos WHERE imagem <> ''"):
+        if localizar_imagem(linha["imagem"].split("/", 1)[-1]) is None:
+            faltando.append({"produto": linha["nome"], "imagem": linha["imagem"]})
+    return faltando
+
+
+def arquivos_em_imagens():
+    pasta = pasta_de_imagens()
+    return sorted(os.listdir(pasta)) if pasta else []
+
+
+def verificar_imagens(conexao):
+    faltando = imagens_faltando(conexao)
+    if not faltando:
+        return
+    print("\nAviso: imagens não encontradas (o card mostrará 'Imagem indisponível'):")
+    for item in faltando:
+        print(f"  - {item['produto']}: {item['imagem']}")
+    existentes = arquivos_em_imagens()
+    print("Arquivos na pasta Imagens:", ", ".join(existentes) if existentes else "(pasta Imagens não encontrada ou vazia)")
+    print()
 
 
 class LojaHandler(SimpleHTTPRequestHandler):
@@ -864,12 +928,20 @@ class LojaHandler(SimpleHTTPRequestHandler):
             traceback.print_exc()
             self.responder_json(500, {"erro": "Erro interno do servidor."})
 
+    def translate_path(self, path):
+        caminho = urllib.parse.unquote(urllib.parse.urlsplit(path).path)
+        if caminho.lower().startswith(PASTA_IMAGENS.lower()):
+            encontrado = localizar_imagem(caminho[len(PASTA_IMAGENS):])
+            if encontrado:
+                return encontrado
+        return super().translate_path(path)
+
     def caminho_estatico_permitido(self, caminho):
         if caminho in ARQUIVOS_PUBLICOS:
             return True
         caminho = urllib.parse.unquote(caminho)
         return (
-            caminho.startswith(PASTA_IMAGENS)
+            caminho.lower().startswith(PASTA_IMAGENS.lower())
             and not caminho.endswith("/")
             and "\\" not in caminho
             and "\x00" not in caminho
@@ -908,6 +980,14 @@ class LojaHandler(SimpleHTTPRequestHandler):
         with banco() as conexao:
             produtos = buscar_produtos(conexao)
         self.responder_json(200, produtos)
+
+    def get_saude(self):
+        with banco() as conexao:
+            faltando = imagens_faltando(conexao)
+        self.responder_json(
+            200,
+            {"ok": True, "imagens_faltando": faltando, "arquivos_na_pasta_imagens": arquivos_em_imagens()},
+        )
 
     def get_categorias(self):
         with banco() as conexao:
@@ -1048,6 +1128,7 @@ def iniciar_api_web(host="127.0.0.1", porta=8000, nuvem=False):
     with banco() as conexao:
         inicializar_banco(conexao)
         criar_administrador_inicial(conexao)
+        verificar_imagens(conexao)
 
     try:
         servidor = ThreadingHTTPServer((host, porta), LojaHandler)
