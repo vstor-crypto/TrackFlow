@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: trackflow
+    runtime: python
+    plan: free
+    buildCommand: echo "Sem dependencias para instalar"
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: TRACKFLOW_ADMIN_USER
+        sync: false
+      - key: TRACKFLOW_ADMIN_SENHA
+        sync: false
